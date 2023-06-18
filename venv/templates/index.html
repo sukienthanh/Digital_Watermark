@@ -1,0 +1,460 @@
+{% extends "layout.html" %}
+{% block body %}
+
+<style>
+  .card-body {
+    padding: 0;
+  }
+
+  .navbar .navbar-brand-wrapper .navbar-brand img {
+    height: 60px !important;
+  }
+
+  #dropzone-external,
+  .dropzone-external {
+    width: 220px;
+    height: 220px;
+    background-color: rgb(22 20 20 / 10%);
+    border-width: 1px;
+    border-style: dashed;
+    padding: 0;
+    border-color: #ddd !important;
+  }
+
+  #dropzone-external>*,
+  .dropzone-external>* {
+    pointer-events: none;
+  }
+
+  .dropzone-external {
+    vertical-align: middle;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #dropzone-external.dropzone-active,
+  .dropzone-external.dropzone-active {
+    border-style: solid;
+  }
+
+  .widget-container>span {
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 16px;
+  }
+
+  #dropzone-image,
+  .dropzone-image {
+    max-width: 100%;
+    max-height: 100%;
+  }
+
+  #dropzone-text>span {
+    font-weight: 100;
+    opacity: 0.5;
+  }
+
+  #upload-progress {
+    display: flex;
+    margin-top: 10px;
+  }
+
+  .flex-box {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .w-20 {
+    width: calc(90/4%) !important;
+  }
+
+  .w-30 {
+    width: 30%;
+  }
+
+  .w-15 {
+    width: 15%;
+  }
+
+  .w-10 {
+    width: 10% !important;
+  }
+
+  .embed-control {
+    justify-content: center;
+  }
+
+  img.img-fluid {
+    height: 60%;
+  }
+</style>
+<input type="file" id="select-cover" class="d-none" />
+<input type="file" id="select-wm" class="d-none" />
+
+<div class="row w-100 flex-row">
+  <div class="card-body w-20 d-flex flex-column">
+    <div class="widget-container flex-box" id="cover-container">
+      <h4>Cover Image</h4>
+      <div class="dropzone-external" class="flex-box dx-theme-border-color">
+        <img class="img-fluid" id="cover" src="./static/no-image-icon.png" alt="" />
+      </div>
+    </div>
+    <div class="widget-container flex-box mt-4 d-none">
+      <h4>Gray Layer</h4>
+      <div class="dropzone-external" class="flex-box dx-theme-border-color">
+        <img id="gray" class="img-fluid" id="dwtImg" src="./static/no-image-icon.png" alt="" />
+      </div>
+    </div>
+  </div>
+  <div class="card-body w-20 d-flex flex-column">
+    <!-- <div class="card">
+            <div class="card-body">
+              <div id="message"></div>
+              <div class="mt-4 w-100 text-center" id="generateQR">
+                Tạo QRCode
+              </div>
+            </div>
+          </div> -->
+    <div class="widget-container flex-box" id="wm-container">
+      <h4>Watermark</h4>
+      <div class="dropzone-external" class="flex-box dx-theme-border-color">
+        <img id='wm' class="img-fluid" src="./static/no-image-icon.png" alt="" />
+      </div>
+    </div>
+    <div class="widget-container flex-box mt-4 d-none">
+      <h4>Scrambled Watermark</h4>
+      <div class="dropzone-external" class="flex-box dx-theme-border-color">
+        <img id="scrambled-wm" class="img-fluid" src="./static/no-image-icon.png" alt="" />
+      </div>
+    </div>
+  </div>
+  <div class="card-body w-10 d-flex flex-column embed-control">
+    <div class="">
+      <div class="">
+        <div id="alpha"></div>
+        <div class="mt-4 w-100 text-center btn btn-info" id="embed">
+          Embed
+        </div>
+        <div class="w-100 mt-3 text-center">
+          <button id="extract" class="w-100 btn btn-success">Extract</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card-body w-20 d-flex flex-column">
+    <div class="widget-container flex-box">
+      <h4>Watermarked Image</h4>
+      <div class="dropzone-external" class="flex-box dx-theme-border-color">
+        <img class="img-fluid" id="watermarked" src="./static/no-image-icon.png" alt="" />
+      </div>
+    </div>
+    <h6 id="embed-info" class="mt-2 text-center"></h6>
+  </div>
+  <div class="card-body w-20 d-flex flex-column">
+    <div class="widget-container flex-box">
+      <h4>Detected Watermark</h4>
+      <div class="dropzone-external" class="flex-box dx-theme-border-color">
+        <img class="img-fluid" id="extracted-wm" src="./static/no-image-icon.png" alt="" />
+      </div>
+    </div>
+    <h6 id="extracted-info" class="mt-2 text-center"></h6>
+  </div>
+</div>
+<div class="row mt-5 w-100 flex-row">
+  <div class="card-body w-20 d-flex flex-column"></div>
+  <!-- attack-->
+  <div class="w-20 card-body">
+    <div id="attack-container">
+      <div class="widget-container flex-box">
+        <h4>Attacked Image</h4>
+        <div class="dropzone-external" class="flex-box dx-theme-border-color">
+          <img class="img-fluid" id="attacked-watermarked" src="./static/no-image-icon.png" alt="" />
+        </div>
+      </div>
+      <h6 id="attacked-embed-info d-none" class="mt-4 text-center"></h6>
+    </div>
+  </div>
+  <!--button control-->
+  <div class="card-body w-10 d-flex flex-column embed-control">
+    <div class="">
+      <div class="">
+        <div class="w-100 mt-3 text-center d-flex justify-content-center">
+          <button style="width: 220px" id="attack-method"></button>
+        </div>
+        <div class="w-100 mt-3 text-center">
+          <button style="width: 220px" id="attack" class="btn btn-danger">Attack</button>
+        </div>
+        <div class="w-100 mt-3 text-center">
+          <button style="width: 220px" id="attacked-extract" class="btn btn-success">Extract</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!--extract-->
+  <div class="w-20 card-body">
+    <div id="extract-attack-container"></div>
+    <div class="widget-container flex-box">
+      <h4>Detected Watermark</h4>
+      <div class="dropzone-external" class="flex-box dx-theme-border-color">
+        <img class="img-fluid" id="extracted-attack" src="./static/no-image-icon.png" alt="" />
+      </div>
+    </div>
+    <h6 id="extracted-attack-info" class="mt-4 text-center"></h6>
+  </div>
+  <div class="card-body w-20 d-flex flex-column"></div>
+</div>
+
+<script>
+  $(() => {
+    let attackMethod, percent, alpha;
+    let coverName = "";
+    let wmName = "";
+    $("#cover-container").on("click", function () {
+      $("#select-cover").trigger("click");
+    });
+
+    $("#select-cover").on("change", function () {
+      const file = $("#select-cover").prop('files')[0];
+      let formData = new FormData();
+      if (file) {
+        formData.append("image", file);
+      } else {
+        return;
+      }
+
+      $.ajax({
+        method: "post",
+        url: "/UploadCover",
+        processData: false,
+        data: formData,
+        contentType: false,
+      })
+        .done(function (e) {
+          coverName = e;
+          $("#cover").attr("src", './static/cover/' + e);
+          // $("#gray").attr("src", './static/gray/' + e);
+          $("#cover").css('height', '100%')
+          // $("#gray").css('height', '100%')
+        })
+        .fail(function (e) {
+          console.log("upload cover image failed");
+        });
+    })
+
+    $("#wm-container").on("click", function () {
+      $("#select-wm").trigger("click");
+    });
+
+    $("#select-wm").on("change", function () {
+      const wmFile = $("#select-wm").prop('files')[0];
+      let formData = new FormData();
+      if (wmFile) {
+        formData.append("image", wmFile);
+        formData.append('coverImage', coverName);
+      } else {
+        return;
+      }
+      $.ajax({
+        method: "post",
+        url: "/UploadWatermark",
+        processData: false,
+        data: formData,
+        contentType: false,
+      })
+        .done(function (e) {
+          $("#wm").attr("src", './static/watermark/' + e);
+          $("#wm").css('height', '100%');
+          wmName = e;
+        })
+        .fail(function (e) {
+          console.log("upload watermark image failed");
+        });
+    })
+
+    $("#embed").on("click", function () {
+
+      const wmFile = $("#select-wm").prop('files')[0];
+      const coverFile = $("#select-cover").prop('files')[0];
+      if (wmFile && coverFile) {
+        const coverHeight = $("#cover")[0].naturalHeight;
+        const coverWidth = $("#cover")[0].naturalWidth;
+        const wmHeight = $("#wm")[0].naturalHeight;
+        const wmWidth = $("#wm")[0].naturalWidth;
+        if (coverHeight != coverWidth || wmHeight != wmWidth) {
+          DevExpress.ui.notify("Support square photo only!", "warning", 7000);
+          return;
+        }
+        if (Math.round(wmHeight * 2) != Math.round(coverHeight)) {
+          DevExpress.ui.notify("The size of the watermark image must be half of the cover image!", "warning", 7000);
+          return;
+        }
+      } else {
+        DevExpress.ui.notify("Please choose cover image and watermark image!", "warning", 7000);
+        return;
+      }
+      alpha = watermarkData.option("value");
+      let formData = new FormData();
+      formData.append("alpha", alpha);
+      formData.append("coverName", coverName);
+      formData.append('wmName', wmName);
+
+      $.ajax({
+        url: "/Embed",
+        method: "POST",
+        processData: false,
+        data: formData,
+        contentType: false,
+      })
+        .done((e) => {
+          $("#embed-info").html(`PSNR: <span id="psnr">${e}</span>`);
+          $("#watermarked").attr("src", './static/watermarked/' + coverName + '?' + Math.random());
+          $("#watermarked").css('height', '100%');
+          console.log("embed success");
+        })
+        .fail(() => {
+          console.log("embed failed");
+        });
+    });
+
+    $("#extract").on("click", function () {
+      let formData = new FormData();
+      formData.append("alpha", alpha);
+      formData.append("watermarked", coverName);
+      formData.append('wmName', wmName);
+
+      $.ajax({
+        url: "/Extract",
+        method: "POST",
+        processData: false,
+        data: formData,
+        contentType: false,
+      })
+        .done((e) => {
+          $("#extracted-info").html(`NCC: <span id="ncc">${e}</span>`);
+          $('#extracted-vm').attr("src", "");
+          $("#extracted-wm").attr("src", './static/extracted/' + wmName + '?' + Math.random());
+          $("#extracted-wm").css('height', '100%');
+          console.log("extract success");
+        })
+        .fail(() => {
+          console.log("extract failed");
+        });
+    });
+
+    $("#attacked-extract").on("click", function () {
+      let formData = new FormData();
+      formData.append("alpha", alpha);
+      formData.append("watermarked", coverName);
+      formData.append('wmName', wmName);
+      formData.append('method', attackMethod + "_" + percent);
+
+      $.ajax({
+        url: "/ExtractAttacked",
+        method: "POST",
+        processData: false,
+        data: formData,
+        contentType: false,
+      })
+        .done((e) => {
+          $('#extract-attack-container').removeClass("d-none");
+          $("#extracted-attack-info").html(`NCC: <span >${e}</span>`);
+          $("#extracted-attack").attr("src", './static/attacked/extracted/' + attackMethod + "_" + percent + "_" + wmName + '?' + Math.random());
+          $("#extracted-attack").css('height', '100%');
+          console.log("extract success");
+        })
+        .fail(() => {
+          console.log("extract failed");
+        });
+    });
+
+    const attackList = [{
+      type: "Crop 5%",
+      method: "crop",
+      value: 1,
+      percent: "5"
+    }, {
+      type: "Crop 10%",
+      method: "crop",
+      value: 2,
+      percent: "10"
+    }, {
+      type: "Rotate 5°",
+      method: "rotate",
+      percent: "5",
+      value: 5
+    }, {
+      type: "Rotate 10°",
+      method: "rotate",
+      percent: "10",
+      value: 6,
+    },
+    {
+      type: "Compress 25%",
+      method: "compress",
+      percent: "25",
+      value: 9,
+    },
+    {
+      type: "Compress 50%",
+      method: "compress",
+      percent: "50",
+      value: 10,
+    }]
+
+    const selectAttackMethod = $("#attack-method").dxSelectBox({
+      dataSource: attackList,
+      displayExpr: 'type',
+      valueExpr: 'value',
+      placeholder: 'Choose attack method',
+      onValueChanged: function (e) {
+        let data = e.component.option("selectedItem");
+        attackMethod = data.method;
+        percent = data.percent;
+      }
+
+    }
+    ).dxSelectBox("instance");
+
+    $("#attack").on("click", function () {
+      // attackMethod = selectAttackMethod.option('value');
+      if (!selectAttackMethod.option("value")) {
+        DevExpress.ui.notify("Please choose attack method!", "warning", 7000);
+        return;
+      }
+      let formData = new FormData();
+
+      formData.append("watermarked", coverName);
+      formData.append("attackMethod", attackMethod);
+      formData.append("percent", percent);
+
+      $.ajax({
+        url: "/Attack",
+        method: "POST",
+        processData: false,
+        data: formData,
+        contentType: false,
+      }).done(function (e) {
+        $('#attack-container').removeClass("d-none");
+        $("#attacked-embed-info").html(`PSNR: <span >${e}</span>`);
+        $("#attacked-watermarked").attr("src", "");
+        $("#attacked-watermarked").attr("src", './static/attacked/' + attackMethod + "_" + percent + "_" + coverName + '?' + Math.random());
+        $("#attacked-watermarked").css('height', '100%');
+      }).fail(function () {
+        console.log("attack failed");
+      })
+    })
+
+    const watermarkData = $("#alpha")
+      .dxTextBox({
+        label: "Embed strength",
+        dataType: "number",
+        value: 0.3
+      })
+      .dxTextBox("instance");
+  });
+</script>
+
+{% endblock %}
